@@ -1,15 +1,20 @@
-from pathlib import Path
 import os
 import dj_database_url
+from pathlib import Path
 
+# Construye las rutas dentro del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SEGURIDAD: Usa la clave del entorno en Render, o una por defecto en local
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 
+# DEBUG: Será False en Render (Producción) y True en tu PC (Local)
 DEBUG = "RENDER" not in os.environ
 
-ALLOWED_HOSTS = ["*"]
+# HOSTS: Acepta todo para evitar errores de dominio
+ALLOWED_HOSTS = ['*']
 
+# Si Render nos da un nombre de host específico, lo agregamos también
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -21,12 +26,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "tasks",
+    "tasks", # Tu aplicación
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware", # <--- Vital para Render
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -55,11 +60,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "djangocrud.wsgi.application"
 
+# BASE DE DATOS HÍBRIDA
+# Si hay DATABASE_URL (Render), usa PostgreSQL.
+# Si no (Tu PC), usa SQLite.
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True,
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',
+        conn_max_age=600
     )
 }
 
@@ -75,10 +82,13 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# ARCHIVOS ESTÁTICOS (CSS/Bootstrap)
+STATIC_URL = '/static/'
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+if not DEBUG:
+    # Configuración para Producción (Render)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
